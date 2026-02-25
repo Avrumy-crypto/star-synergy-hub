@@ -1,4 +1,5 @@
 import ScrollReveal from "./ScrollReveal";
+import { ArrowRight } from "lucide-react";
 import flexImg from "@/assets/division-flexible.jpg";
 import containerImg from "@/assets/division-containers.jpg";
 import cartonImg from "@/assets/division-carton.jpg";
@@ -15,40 +16,40 @@ const DivisionGrid = () => (
   <section className="section-padding bg-background">
     <div className="container-narrow">
       <ScrollReveal>
-        <p className="text-sm font-semibold text-primary tracking-widest uppercase mb-3">
-          Our Divisions
-        </p>
-        <h2 className="text-3xl md:text-4xl font-extrabold text-foreground mb-4">
-          Four Divisions. One Vision.
-        </h2>
-        <p className="text-muted-foreground max-w-2xl mb-12">
-          Each division is a specialist. Together, we deliver an integrated packaging ecosystem that
-          covers every format and every stage of the supply chain.
-        </p>
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <p className="text-xs font-semibold text-primary tracking-widest uppercase mb-2">
+              Our Divisions
+            </p>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">
+              Four Divisions. One Vision.
+            </h2>
+          </div>
+          <a href="#" className="hidden md:flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+            View All <ArrowRight size={14} />
+          </a>
+        </div>
       </ScrollReveal>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {divisions.map((div, i) => (
-          <ScrollReveal key={div.name} delay={i * 0.1}>
+          <ScrollReveal key={div.name} delay={i * 0.08}>
             <a
               href="#"
-              className="group relative block overflow-hidden rounded-xl bg-card border border-border shadow-sm hover:shadow-lg hover:border-primary transition-all duration-300"
+              className="group relative block overflow-hidden rounded-lg bg-card border border-border hover:border-primary hover:shadow-md transition-all duration-300"
             >
-              <div className="aspect-[4/3] overflow-hidden">
+              <div className="aspect-[3/2] overflow-hidden">
                 <img
                   src={div.img}
                   alt={div.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <div className="p-6">
-                <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+              <div className="p-4">
+                <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
                   {div.name}
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">{div.desc}</p>
-                <span className="inline-block mt-3 text-sm font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                  Learn More →
-                </span>
+                <p className="text-xs text-muted-foreground mt-0.5">{div.desc}</p>
               </div>
             </a>
           </ScrollReveal>
