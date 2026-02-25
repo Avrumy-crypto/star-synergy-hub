@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X, Globe, Phone, Mail } from "lucide-react";
 import logo from "@/assets/five-star-logo.svg";
 
 const divisions = [
@@ -26,18 +26,26 @@ const divisions = [
   },
 ];
 
+const languages = [
+  { code: "en", label: "English" },
+  { code: "tr", label: "Türkçe" },
+  { code: "es", label: "Español" },
+];
+
 const navLinks = [
-  { name: "Our Divisions", href: "/divisions", hasMega: true },
+  { name: "Home", href: "/" },
+  { name: "Divisions", href: "/divisions", hasMega: true },
   { name: "Solutions", href: "/solutions" },
   { name: "Sustainability", href: "/sustainability" },
   { name: "Careers", href: "/careers" },
-  { name: "Contact", href: "/contact" },
 ];
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const [currentLang, setCurrentLang] = useState("en");
   const location = useLocation();
 
   useEffect(() => {
@@ -49,131 +57,183 @@ const Header = () => {
   useEffect(() => {
     setMobileOpen(false);
     setMegaOpen(false);
+    setLangOpen(false);
   }, [location]);
 
-  return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-card/95 backdrop-blur-md shadow-sm border-b border-border"
-          : "bg-transparent"
-      }`}
-    >
-      <div className="container-narrow flex items-center justify-between h-[72px] px-6 lg:px-12">
-        {/* Logo */}
-        <Link to="/" className="flex-shrink-0">
-          <img src={logo} alt="Five Star Group" className="h-10 w-auto" />
-        </Link>
+  const currentLangLabel = languages.find((l) => l.code === currentLang)?.label || "English";
 
-        {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-1">
-          {navLinks.map((link) =>
-            link.hasMega ? (
-              <div
-                key={link.name}
-                className="relative"
-                onMouseEnter={() => setMegaOpen(true)}
-                onMouseLeave={() => setMegaOpen(false)}
+  return (
+    <>
+      {/* Top Utility Bar */}
+      <div className="bg-foreground text-background/70 text-xs relative z-50">
+        <div className="container-narrow flex items-center justify-between h-9 px-6 lg:px-12">
+          <div className="flex items-center gap-5">
+            <a href="tel:+18005550199" className="flex items-center gap-1.5 hover:text-background transition-colors">
+              <Phone size={11} />
+              <span>+1 (800) 555-0199</span>
+            </a>
+            <a href="mailto:info@fivestargroup.com" className="hidden sm:flex items-center gap-1.5 hover:text-background transition-colors">
+              <Mail size={11} />
+              <span>info@fivestargroup.com</span>
+            </a>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link to="/contact" className="hover:text-background transition-colors font-medium">
+              Contact Us
+            </Link>
+            <span className="w-px h-3.5 bg-background/20" />
+            {/* Language Switcher */}
+            <div className="relative">
+              <button
+                onClick={() => setLangOpen(!langOpen)}
+                className="flex items-center gap-1.5 hover:text-background transition-colors"
               >
-                <button
-                  className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    megaOpen
-                      ? "text-primary bg-accent"
-                      : scrolled
-                      ? "text-foreground hover:text-primary hover:bg-accent"
+                <Globe size={12} />
+                <span>{currentLangLabel}</span>
+                <ChevronDown size={10} className={`transition-transform ${langOpen ? "rotate-180" : ""}`} />
+              </button>
+              {langOpen && (
+                <div className="absolute right-0 top-full mt-1 bg-card border border-border rounded-md shadow-lg py-1 min-w-[120px] z-50">
+                  {languages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => {
+                        setCurrentLang(lang.code);
+                        setLangOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors ${
+                        currentLang === lang.code ? "text-primary font-semibold" : "text-foreground"
+                      }`}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Header */}
+      <header
+        className={`sticky top-0 left-0 right-0 z-40 transition-all duration-300 ${
+          scrolled
+            ? "bg-card/98 backdrop-blur-md shadow-sm border-b border-border"
+            : "bg-card border-b border-border"
+        }`}
+      >
+        <div className="container-narrow flex items-center justify-between h-16 px-6 lg:px-12">
+          {/* Logo */}
+          <Link to="/" className="flex-shrink-0">
+            <img src={logo} alt="Five Star Group" className="h-9 w-auto" />
+          </Link>
+
+          {/* Desktop Nav */}
+          <nav className="hidden lg:flex items-center gap-0.5">
+            {navLinks.map((link) =>
+              link.hasMega ? (
+                <div
+                  key={link.name}
+                  className="relative"
+                  onMouseEnter={() => setMegaOpen(true)}
+                  onMouseLeave={() => setMegaOpen(false)}
+                >
+                  <button
+                    className={`flex items-center gap-1 px-4 py-2 text-sm font-medium transition-colors ${
+                      megaOpen
+                        ? "text-primary"
+                        : "text-foreground hover:text-primary"
+                    }`}
+                  >
+                    {link.name}
+                    <ChevronDown
+                      size={13}
+                      className={`transition-transform ${megaOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+
+                  {/* Mega Menu */}
+                  {megaOpen && (
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 pt-1">
+                      <div className="bg-card rounded-lg shadow-xl border border-border p-5 grid grid-cols-2 gap-3 w-[520px] animate-fade-in">
+                        {divisions.map((div) => (
+                          <a
+                            key={div.name}
+                            href={div.href}
+                            className="group flex flex-col gap-1 p-3 rounded-md hover:bg-accent transition-colors"
+                          >
+                            <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                              {div.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground leading-relaxed">
+                              {div.description}
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  key={link.name}
+                  to={link.href}
+                  className={`px-4 py-2 text-sm font-medium transition-colors ${
+                    location.pathname === link.href
+                      ? "text-primary"
                       : "text-foreground hover:text-primary"
                   }`}
                 >
                   {link.name}
-                  <ChevronDown
-                    size={14}
-                    className={`transition-transform ${megaOpen ? "rotate-180" : ""}`}
-                  />
-                </button>
+                </Link>
+              )
+            )}
+          </nav>
 
-                {/* Mega Menu */}
-                {megaOpen && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2">
-                    <div className="bg-card rounded-xl shadow-xl border border-border p-6 grid grid-cols-2 gap-4 w-[560px] animate-fade-in">
-                      {divisions.map((div) => (
-                        <a
-                          key={div.name}
-                          href={div.href}
-                          className="group flex flex-col gap-1.5 p-4 rounded-lg hover:bg-accent transition-colors"
-                        >
-                          <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-                            {div.name}
-                          </span>
-                          <span className="text-xs text-muted-foreground leading-relaxed">
-                            {div.description}
-                          </span>
-                          <span className="text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity mt-1">
-                            Visit Site →
-                          </span>
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                key={link.name}
-                to={link.href}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  location.pathname === link.href
-                    ? "text-primary bg-accent"
-                    : scrolled
-                    ? "text-foreground hover:text-primary hover:bg-accent"
-                    : "text-foreground hover:text-primary"
-                }`}
-              >
-                {link.name}
-              </Link>
-            )
-          )}
-        </nav>
+          {/* CTA */}
+          <Link
+            to="/contact"
+            className="hidden lg:inline-flex px-5 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded hover:brightness-110 transition-all"
+          >
+            Get a Quote
+          </Link>
 
-        {/* CTA */}
-        <Link
-          to="/contact"
-          className="hidden lg:inline-flex px-5 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:brightness-110 transition-all"
-        >
-          Get a Quote
-        </Link>
-
-        {/* Mobile Toggle */}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="lg:hidden p-2 text-foreground"
-        >
-          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {mobileOpen && (
-        <div className="lg:hidden bg-card border-t border-border animate-fade-in">
-          <div className="px-6 py-4 flex flex-col gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.hasMega ? "/" : link.href}
-                className="px-4 py-3 text-sm font-medium text-foreground hover:text-primary hover:bg-accent rounded-lg transition-colors"
-              >
-                {link.name}
-              </Link>
-            ))}
-            <Link
-              to="/contact"
-              className="mt-2 px-5 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-lg text-center hover:brightness-110 transition-all"
-            >
-              Get a Quote
-            </Link>
-          </div>
+          {/* Mobile Toggle */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="lg:hidden p-2 text-foreground"
+          >
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
-      )}
-    </header>
+
+        {/* Mobile Menu */}
+        {mobileOpen && (
+          <div className="lg:hidden bg-card border-t border-border animate-fade-in">
+            <div className="px-6 py-4 flex flex-col gap-0.5">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  to={link.hasMega ? "/" : link.href}
+                  className="px-4 py-2.5 text-sm font-medium text-foreground hover:text-primary hover:bg-accent rounded transition-colors"
+                >
+                  {link.name}
+                </Link>
+              ))}
+              <div className="border-t border-border mt-2 pt-2">
+                <Link
+                  to="/contact"
+                  className="block px-5 py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded text-center hover:brightness-110 transition-all"
+                >
+                  Get a Quote
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+      </header>
+    </>
   );
 };
 
