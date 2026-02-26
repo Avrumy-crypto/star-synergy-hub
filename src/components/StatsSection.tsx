@@ -1,15 +1,18 @@
 import ScrollReveal from "./ScrollReveal";
 import { motion } from "framer-motion";
+import { useI18n } from "@/lib/i18n";
 
-const stats = [
-  { value: "25+", label: "Manufacturing Facilities" },
-  { value: "4", label: "Specialized Divisions" },
-  { value: "100%", label: "Recyclable Options" },
-  { value: "50+", label: "Years of Excellence" },
-];
+const StatsSection = () => {
+  const { t } = useI18n();
+  const stats = [
+    { value: "25+", label: t("stats.facilities") },
+    { value: "7", label: t("stats.divisions") },
+    { value: "100%", label: t("stats.recyclable") },
+    { value: "30+", label: t("stats.years") },
+  ];
 
-const StatsSection = () => (
-  <section className="section-padding bg-background">
+  return (
+    <section className="section-padding bg-background">
     <div className="container-narrow">
       <ScrollReveal>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
@@ -32,6 +35,7 @@ const StatsSection = () => (
       </ScrollReveal>
     </div>
   </section>
-);
+  );
+};
 
 export default StatsSection;

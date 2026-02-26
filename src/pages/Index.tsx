@@ -1,9 +1,10 @@
 import Header from "@/components/Header";
-import HeroSection from "@/components/HeroSection";
+import HeroSection from "@/pages/HeroSection";
 import DivisionGrid from "@/components/DivisionGrid";
+import SustainabilityVisualSection from "@/components/SustainabilityVisualSection";
+import RDSection from "@/components/RDSection";
 import SynergySection from "@/components/SynergySection";
 import StatsSection from "@/components/StatsSection";
-import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 
 const Index = () => (
@@ -12,9 +13,10 @@ const Index = () => (
     <main>
       <HeroSection />
       <DivisionGrid />
+      <SustainabilityVisualSection />
       <StatsSection />
+      <RDSection />
       <SynergySection />
-      <CTASection />
     </main>
     <Footer />
   </div>
