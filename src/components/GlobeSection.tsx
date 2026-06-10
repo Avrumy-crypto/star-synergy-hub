@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 import { X, MapPin, Users, Building2, ArrowRight } from "lucide-react";
+import * as THREE from "three";
 import ScrollReveal from "./ScrollReveal";
 
 const GlobeGL = lazy(() => import("react-globe.gl"));
@@ -100,66 +102,67 @@ const LOCATIONS: Location[] = [
   },
 ];
 
+const ACCENT = "hsl(205, 84%, 62%)";
 const PRIMARY = "#1076b8";
-const PRIMARY_GLOW = "rgba(16,118,184,0.5)";
-// USA-centered point of view
-const USA_POV = { lat: 39.5, lng: -98.35, altitude: 1.45 };
+const USA_POV = { lat: 39.5, lng: -97, altitude: 1.5 };
+const COUNTRIES_URL = "https://globe.gl/example/datasets/ne_110m_admin_0_countries.geojson";
 
 export default function GlobeSection() {
   const [active, setActive] = useState<Location | null>(null);
+  const [countries, setCountries] = useState<object[]>([]);
   const [globeReady, setGlobeReady] = useState(false);
   const globeRef = useRef<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [globeWidth, setGlobeWidth] = useState(600);
-  const globeHeight = 500;
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [wrapSize, setWrapSize] = useState({ w: 700, h: 620 });
   const returnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Measure globe container width
+  // Land dot-matrix data
+  useEffect(() => {
+    fetch(COUNTRIES_URL)
+      .then((r) => r.json())
+      .then((geo) => setCountries(geo.features))
+      .catch(() => {});
+  }, []);
+
+  // Track wrapper size so the globe canvas can overflow the card edge
   useEffect(() => {
     const update = () => {
-      if (containerRef.current) setGlobeWidth(containerRef.current.offsetWidth);
+      if (!wrapRef.current) return;
+      setWrapSize({ w: wrapRef.current.offsetWidth, h: wrapRef.current.offsetHeight });
     };
     update();
     const ro = new ResizeObserver(update);
-    if (containerRef.current) ro.observe(containerRef.current);
+    if (wrapRef.current) ro.observe(wrapRef.current);
     return () => ro.disconnect();
   }, []);
 
-  // Schedule auto-return to USA view after 5s of inactivity
+  // After 5s of no interaction, glide back to the USA view
   const scheduleReturn = useCallback(() => {
     if (returnTimer.current) clearTimeout(returnTimer.current);
     returnTimer.current = setTimeout(() => {
-      if (globeRef.current) {
-        globeRef.current.pointOfView(USA_POV, 1400);
-      }
+      globeRef.current?.pointOfView(USA_POV, 1400);
     }, 5000);
   }, []);
 
-  // Configure controls once globe is ready
   useEffect(() => {
     if (!globeReady || !globeRef.current) return;
     const ctrl = globeRef.current.controls();
     ctrl.enableZoom = true;
     ctrl.enablePan = false;
-    ctrl.minDistance = 120;
-    ctrl.maxDistance = 500;
+    ctrl.minDistance = 130;
+    ctrl.maxDistance = 480;
     ctrl.addEventListener("change", scheduleReturn);
-    // Start zoomed to USA
     globeRef.current.pointOfView(USA_POV, 0);
-    scheduleReturn();
     return () => {
       ctrl.removeEventListener("change", scheduleReturn);
       if (returnTimer.current) clearTimeout(returnTimer.current);
     };
   }, [globeReady, scheduleReturn]);
 
-  const handleMarkerClick = useCallback(
-    (point: object) => {
-      const loc = point as Location;
+  const selectLocation = useCallback(
+    (loc: Location) => {
       setActive(loc);
-      if (globeRef.current) {
-        globeRef.current.pointOfView({ lat: loc.lat, lng: loc.lng, altitude: 0.9 }, 900);
-      }
+      globeRef.current?.pointOfView({ lat: loc.lat, lng: loc.lng - 10, altitude: 1.0 }, 900);
       scheduleReturn();
     },
     [scheduleReturn]
@@ -167,214 +170,202 @@ export default function GlobeSection() {
 
   const handleClose = () => {
     setActive(null);
-    if (globeRef.current) globeRef.current.pointOfView(USA_POV, 1000);
-    if (returnTimer.current) clearTimeout(returnTimer.current);
+    globeRef.current?.pointOfView(USA_POV, 1000);
   };
 
+  // Pill-style HTML markers on the globe (like the reference)
+  const makeMarker = useCallback(
+    (d: object) => {
+      const loc = d as Location;
+      const el = document.createElement("div");
+      el.style.cssText =
+        "display:flex;align-items:center;gap:6px;padding:5px 12px 5px 8px;border-radius:999px;" +
+        "background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.35);" +
+        "backdrop-filter:blur(6px);color:#fff;font-size:11px;font-weight:600;" +
+        "font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;white-space:nowrap;" +
+        "transform:translate(-50%,-50%);pointer-events:auto;transition:background .2s;";
+      el.innerHTML =
+        `<span style="width:9px;height:9px;border-radius:50%;border:2px solid #fff;` +
+        `background:${ACCENT};box-shadow:0 0 8px ${ACCENT};flex-shrink:0"></span>${loc.state}`;
+      el.onmouseenter = () => (el.style.background = "rgba(255,255,255,0.3)");
+      el.onmouseleave = () => (el.style.background = "rgba(255,255,255,0.14)");
+      el.onclick = (e) => {
+        e.stopPropagation();
+        selectLocation(loc);
+      };
+      return el;
+    },
+    [selectLocation]
+  );
+
+  const globeW = Math.round(wrapSize.w * 1.45);
+  const globeH = Math.round(Math.max(wrapSize.h, globeW) * 1.15);
+
   return (
-    <section className="relative overflow-hidden" style={{ background: "hsl(220,30%,10%)" }}>
-      {/* top gradient blend from previous section */}
-      <div
-        className="pointer-events-none absolute top-0 left-0 right-0 h-24 z-10"
-        style={{ background: "linear-gradient(to bottom, hsl(210,17%,98%) 0%, transparent 100%)" }}
-      />
-      {/* radial blue glow */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 60% at 70% 50%, rgba(16,118,184,0.12) 0%, transparent 65%)",
-        }}
-      />
+    <section className="px-4 py-10 md:px-8 lg:px-12 bg-background">
+      <ScrollReveal>
+        <div
+          className="relative mx-auto max-w-[1500px] rounded-3xl overflow-hidden"
+          style={{
+            background:
+              "linear-gradient(115deg, hsl(212,75%,14%) 0%, hsl(208,80%,20%) 55%, hsl(205,84%,28%) 100%)",
+          }}
+        >
+          {/* soft light sweep, like the reference */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse 55% 45% at 28% 22%, rgba(255,255,255,0.10) 0%, transparent 60%)",
+            }}
+          />
 
-      <div className="container-narrow px-6 lg:px-12 relative z-10 py-24">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-
-          {/* ── Left: text ── */}
-          <ScrollReveal>
-            <div className="max-w-lg">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-stretch">
+            {/* ── Left: copy ── */}
+            <div className="relative z-10 px-8 py-16 md:px-14 lg:py-24 flex flex-col justify-center">
               <p
-                className="text-xs font-bold tracking-[0.2em] uppercase mb-4"
-                style={{ color: "hsl(205,84%,62%)" }}
+                className="text-xs font-bold tracking-[0.28em] uppercase mb-10"
+                style={{ color: "rgba(255,255,255,0.85)" }}
               >
                 Our Locations
               </p>
-              <h2 className="text-4xl md:text-5xl font-extrabold text-white leading-tight mb-5">
-                Serving You<br />
-                <span style={{ color: "hsl(205,84%,62%)" }}>Coast to Coast.</span>
+              <h2 className="text-5xl md:text-6xl font-extrabold leading-[1.05] text-white mb-3">
+                National reach.
               </h2>
-              <p className="text-white/50 text-lg leading-relaxed mb-8">
-                With facilities strategically placed across the United States, Five Star Group delivers faster, smarter, and closer to your door.
+              <h2
+                className="text-5xl md:text-6xl font-extrabold leading-[1.05] mb-10"
+                style={{ color: ACCENT }}
+              >
+                Local commitment.
+              </h2>
+              <p className="text-white/70 text-lg leading-relaxed max-w-md mb-12">
+                Six manufacturing facilities across the United States,
+                delivering packaging where you need it — and growing.
               </p>
-
-              {/* Stats row */}
-              <div className="flex gap-8 mb-10">
-                <div>
-                  <div className="text-3xl font-extrabold text-white">{LOCATIONS.length}</div>
-                  <div className="text-xs text-white/40 mt-0.5 uppercase tracking-wide">Facilities</div>
-                </div>
-                <div className="w-px bg-white/10" />
-                <div>
-                  <div className="text-3xl font-extrabold text-white">6</div>
-                  <div className="text-xs text-white/40 mt-0.5 uppercase tracking-wide">States</div>
-                </div>
-                <div className="w-px bg-white/10" />
-                <div>
-                  <div className="text-3xl font-extrabold text-white">30+</div>
-                  <div className="text-xs text-white/40 mt-0.5 uppercase tracking-wide">Years</div>
-                </div>
-              </div>
-
-              {/* Location pills */}
-              <div className="flex flex-wrap gap-2">
-                {LOCATIONS.map((loc) => (
-                  <motion.button
-                    key={loc.id}
-                    onClick={() => handleMarkerClick(loc)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.96 }}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all"
-                    style={
-                      active?.id === loc.id
-                        ? { background: PRIMARY, color: "#fff", borderColor: PRIMARY }
-                        : {
-                            background: "rgba(255,255,255,0.05)",
-                            color: "rgba(255,255,255,0.55)",
-                            borderColor: "rgba(255,255,255,0.1)",
-                          }
-                    }
-                  >
-                    <MapPin size={9} />
-                    {loc.city}, {loc.state}
-                  </motion.button>
-                ))}
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/divisions"
+                  className="inline-flex items-center px-7 py-3.5 rounded-full bg-white text-sm font-bold transition-transform hover:scale-[1.03]"
+                  style={{ color: "hsl(208,80%,20%)" }}
+                >
+                  Explore divisions
+                </Link>
+                <Link
+                  to="/contact"
+                  className="w-12 h-12 rounded-full bg-white flex items-center justify-center transition-transform hover:scale-[1.06]"
+                  style={{ color: "hsl(208,80%,20%)" }}
+                >
+                  <ArrowRight size={18} />
+                </Link>
               </div>
             </div>
-          </ScrollReveal>
 
-          {/* ── Right: globe ── */}
-          <div ref={containerRef} className="relative" style={{ height: globeHeight }}>
-            <Suspense
-              fallback={
-                <div
-                  className="h-full flex items-center justify-center text-white/20 text-sm"
-                  style={{ height: globeHeight }}
-                >
-                  Loading map…
-                </div>
-              }
-            >
-              <GlobeGL
-                ref={globeRef}
-                width={globeWidth}
-                height={globeHeight}
-                backgroundColor="rgba(0,0,0,0)"
-                globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
-                atmosphereColor={PRIMARY}
-                atmosphereAltitude={0.18}
-                pointsData={LOCATIONS}
-                pointAltitude={0.06}
-                pointRadius={0.55}
-                pointColor={(d) =>
-                  active?.id === (d as Location).id ? "#ffffff" : PRIMARY
-                }
-                pointLabel={(d) => `<div style="background:rgba(10,15,30,0.85);color:#fff;padding:6px 10px;border-radius:8px;font-size:12px;font-family:sans-serif;border:1px solid rgba(16,118,184,0.4)">${(d as Location).name}<br/><span style="color:rgba(255,255,255,0.5);font-size:10px">${(d as Location).city}, ${(d as Location).state}</span></div>`}
-                onPointClick={handleMarkerClick}
-                ringsData={active ? [active] : []}
-                ringColor={() => PRIMARY_GLOW}
-                ringMaxRadius={4}
-                ringPropagationSpeed={2.5}
-                ringRepeatPeriod={1000}
-                onGlobeReady={() => setGlobeReady(true)}
-              />
-            </Suspense>
-
-            {/* Detail card */}
-            <AnimatePresence>
-              {active && (
-                <motion.div
-                  key={active.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 12 }}
-                  transition={{ type: "spring", stiffness: 340, damping: 28 }}
-                  className="absolute bottom-4 left-1/2 -translate-x-1/2 w-72 rounded-2xl overflow-hidden shadow-2xl z-20"
-                  style={{
-                    background: "rgba(255,255,255,0.97)",
-                    backdropFilter: "blur(12px)",
-                  }}
-                >
-                  <div className="relative h-32 bg-gray-100">
-                    <img
-                      src={active.photo}
-                      alt={active.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      onClick={handleClose}
-                      className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-white transition-colors"
-                    >
-                      <X size={13} />
-                    </button>
-                    <span
-                      className="absolute bottom-2.5 left-3 text-[10px] font-bold px-2.5 py-1 rounded-md text-white"
-                      style={{ background: PRIMARY }}
-                    >
-                      {active.division}
-                    </span>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-extrabold text-gray-900 text-sm leading-snug mb-1">
-                      {active.name}
-                    </h3>
-                    <div className="flex items-center gap-1 text-[11px] text-gray-400 mb-2.5">
-                      <MapPin size={10} />
-                      {active.city}, {active.state}
-                    </div>
-                    <p className="text-[11px] text-gray-500 leading-relaxed mb-3">
-                      {active.description}
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="rounded-lg p-2.5" style={{ background: "hsl(205,84%,95%)" }}>
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <Users size={9} style={{ color: PRIMARY }} />
-                          <span className="text-[9px] text-gray-400 uppercase tracking-wide">Team</span>
-                        </div>
-                        <div className="font-extrabold text-gray-800 text-sm">{active.employees}</div>
-                      </div>
-                      <div className="rounded-lg p-2.5" style={{ background: "hsl(205,84%,95%)" }}>
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <Building2 size={9} style={{ color: PRIMARY }} />
-                          <span className="text-[9px] text-gray-400 uppercase tracking-wide">Facility</span>
-                        </div>
-                        <div className="font-extrabold text-gray-800 text-sm">{active.sqft}</div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* hint text */}
-            {!active && globeReady && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.5 }}
-                className="absolute bottom-2 left-1/2 -translate-x-1/2 text-white/25 text-[11px] text-center whitespace-nowrap select-none pointer-events-none"
+            {/* ── Right: dotted globe bleeding off the edge ── */}
+            <div ref={wrapRef} className="relative h-[440px] lg:h-[680px]">
+              <div
+                className="absolute top-1/2 -translate-y-1/2"
+                style={{ left: "2%" }}
               >
-                Drag to rotate · Scroll to zoom · Click a marker
-              </motion.p>
-            )}
+                <Suspense fallback={null}>
+                  <GlobeGL
+                    ref={globeRef}
+                    width={globeW}
+                    height={globeH}
+                    backgroundColor="rgba(0,0,0,0)"
+                    showGlobe={true}
+                    globeMaterial={
+                      new THREE.MeshPhongMaterial({
+                        color: new THREE.Color("hsl(208, 72%, 26%)"),
+                        transparent: true,
+                        opacity: 0.96,
+                      })
+                    }
+                    showAtmosphere={true}
+                    atmosphereColor="#5db4e8"
+                    atmosphereAltitude={0.12}
+                    hexPolygonsData={countries}
+                    hexPolygonResolution={3}
+                    hexPolygonMargin={0.62}
+                    hexPolygonUseDots={true}
+                    hexPolygonColor={() => "rgba(255,255,255,0.82)"}
+                    htmlElementsData={LOCATIONS}
+                    htmlElement={makeMarker}
+                    htmlAltitude={0.02}
+                    ringsData={active ? [active] : []}
+                    ringColor={() => "rgba(255,255,255,0.45)"}
+                    ringMaxRadius={4}
+                    ringPropagationSpeed={2.5}
+                    ringRepeatPeriod={1000}
+                    onGlobeReady={() => setGlobeReady(true)}
+                  />
+                </Suspense>
+              </div>
+
+              {/* Detail card */}
+              <AnimatePresence>
+                {active && (
+                  <motion.div
+                    key={active.id}
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 14 }}
+                    transition={{ type: "spring", stiffness: 340, damping: 28 }}
+                    className="absolute bottom-5 left-5 w-72 rounded-2xl overflow-hidden shadow-2xl z-20 bg-white"
+                  >
+                    <div className="relative h-32 bg-gray-100">
+                      <img
+                        src={active.photo}
+                        alt={active.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        onClick={handleClose}
+                        className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-white transition-colors"
+                      >
+                        <X size={13} />
+                      </button>
+                      <span
+                        className="absolute bottom-2.5 left-3 text-[10px] font-bold px-2.5 py-1 rounded-md text-white"
+                        style={{ background: PRIMARY }}
+                      >
+                        {active.division}
+                      </span>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-extrabold text-gray-900 text-sm leading-snug mb-1">
+                        {active.name}
+                      </h3>
+                      <div className="flex items-center gap-1 text-[11px] text-gray-400 mb-2.5">
+                        <MapPin size={10} />
+                        {active.city}, {active.state}
+                      </div>
+                      <p className="text-[11px] text-gray-500 leading-relaxed mb-3">
+                        {active.description}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="rounded-lg p-2.5" style={{ background: "hsl(205,84%,95%)" }}>
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <Users size={9} style={{ color: PRIMARY }} />
+                            <span className="text-[9px] text-gray-400 uppercase tracking-wide">Team</span>
+                          </div>
+                          <div className="font-extrabold text-gray-800 text-sm">{active.employees}</div>
+                        </div>
+                        <div className="rounded-lg p-2.5" style={{ background: "hsl(205,84%,95%)" }}>
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <Building2 size={9} style={{ color: PRIMARY }} />
+                            <span className="text-[9px] text-gray-400 uppercase tracking-wide">Facility</span>
+                          </div>
+                          <div className="font-extrabold text-gray-800 text-sm">{active.sqft}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* bottom gradient blend to next section */}
-      <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 z-10"
-        style={{ background: "linear-gradient(to top, hsl(210,17%,98%) 0%, transparent 100%)" }}
-      />
+      </ScrollReveal>
     </section>
   );
 }
