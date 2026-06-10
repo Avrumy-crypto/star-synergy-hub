@@ -5,6 +5,7 @@ import SustainabilityVisualSection from "@/components/SustainabilityVisualSectio
 import RDSection from "@/components/RDSection";
 import SynergySection from "@/components/SynergySection";
 import StatsSection from "@/components/StatsSection";
+import GlobeSection from "@/components/GlobeSection";
 import Footer from "@/components/Footer";
 
 const Index = () => (
@@ -15,6 +16,7 @@ const Index = () => (
       <DivisionGrid />
       <SustainabilityVisualSection />
       <StatsSection />
+      <GlobeSection />
       <RDSection />
       <SynergySection />
     </main>
