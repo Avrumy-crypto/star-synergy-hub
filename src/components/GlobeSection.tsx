@@ -1,109 +1,44 @@
 import { useState, useRef, useCallback, useEffect, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { X, MapPin, Users, Building2, ArrowRight } from "lucide-react";
+import { X, MapPin, ArrowRight } from "lucide-react";
 import * as THREE from "three";
 import ScrollReveal from "./ScrollReveal";
+
+import photoNJ from "@/assets/division-corrugated.jpg";
+import photoPA from "@/assets/division-containers.jpg";
+import photoNY from "@/assets/hero-packaging.jpg";
+import photoGA from "@/assets/division-carton.jpg";
+import photoCA from "@/assets/division-flexible.jpg";
+import photoIA from "@/assets/Corrugated photo.png";
+import photoTX from "@/assets/Folding photo.png";
+import photoFL from "@/assets/container photo.png";
+import photoOH from "@/assets/Radiant photo.png";
 
 const GlobeGL = lazy(() => import("react-globe.gl"));
 
 interface Location {
   id: number;
-  name: string;
-  city: string;
   state: string;
+  label: string;
   lat: number;
   lng: number;
-  description: string;
-  division: string;
   photo: string;
-  employees: string;
-  sqft: string;
 }
 
 const LOCATIONS: Location[] = [
-  {
-    id: 1,
-    name: "Global Headquarters",
-    city: "Brooklyn",
-    state: "New York",
-    lat: 40.6782,
-    lng: -73.9442,
-    description: "Five Star Group's global HQ — strategic center for all divisions, R&D, and executive leadership.",
-    division: "Corporate HQ",
-    photo: "/placeholder.svg",
-    employees: "250+",
-    sqft: "180,000 sq ft",
-  },
-  {
-    id: 2,
-    name: "Radiant Flexo — East",
-    city: "Newark",
-    state: "New Jersey",
-    lat: 40.7357,
-    lng: -74.1724,
-    description: "East Coast flexible packaging hub serving major retail and consumer brands.",
-    division: "Radiant Flexo",
-    photo: "/placeholder.svg",
-    employees: "150+",
-    sqft: "120,000 sq ft",
-  },
-  {
-    id: 3,
-    name: "CorrStar — Southeast",
-    city: "Atlanta",
-    state: "Georgia",
-    lat: 33.749,
-    lng: -84.388,
-    description: "Southeast corrugated packaging production and distribution center.",
-    division: "CorrStar",
-    photo: "/placeholder.svg",
-    employees: "180+",
-    sqft: "140,000 sq ft",
-  },
-  {
-    id: 4,
-    name: "Industry Plastic — Midwest",
-    city: "Chicago",
-    state: "Illinois",
-    lat: 41.8781,
-    lng: -87.6298,
-    description: "Midwest rigid plastic container manufacturing and fulfillment center.",
-    division: "Industry Plastic",
-    photo: "/placeholder.svg",
-    employees: "120+",
-    sqft: "95,000 sq ft",
-  },
-  {
-    id: 5,
-    name: "Stellar Board — South",
-    city: "Dallas",
-    state: "Texas",
-    lat: 32.7767,
-    lng: -96.797,
-    description: "Southern US folding carton production facility, ISO 9001 certified.",
-    division: "Stellar Board",
-    photo: "/placeholder.svg",
-    employees: "200+",
-    sqft: "160,000 sq ft",
-  },
-  {
-    id: 6,
-    name: "ClamPak — West Coast",
-    city: "Los Angeles",
-    state: "California",
-    lat: 34.0522,
-    lng: -118.2437,
-    description: "West Coast clamshell and specialty rigid packaging solutions hub.",
-    division: "ClamPak",
-    photo: "/placeholder.svg",
-    employees: "90+",
-    sqft: "75,000 sq ft",
-  },
+  { id: 1, state: "New York", label: "New York Headquarters", lat: 40.6782, lng: -73.9442, photo: photoNY },
+  { id: 2, state: "New Jersey", label: "New Jersey Warehouse", lat: 40.7357, lng: -74.1724, photo: photoNJ },
+  { id: 3, state: "Pennsylvania", label: "Pennsylvania Distribution Center", lat: 40.2737, lng: -76.8844, photo: photoPA },
+  { id: 4, state: "Ohio", label: "Ohio Production Facility", lat: 39.9612, lng: -82.9988, photo: photoOH },
+  { id: 5, state: "Georgia", label: "Georgia Manufacturing Plant", lat: 33.749, lng: -84.388, photo: photoGA },
+  { id: 6, state: "Florida", label: "Florida Warehouse", lat: 27.9944, lng: -81.7603, photo: photoFL },
+  { id: 7, state: "Iowa", label: "Iowa Distribution Hub", lat: 41.878, lng: -93.0977, photo: photoIA },
+  { id: 8, state: "Texas", label: "Texas Manufacturing Plant", lat: 32.7767, lng: -96.797, photo: photoTX },
+  { id: 9, state: "California", label: "California Warehouse", lat: 34.0522, lng: -118.2437, photo: photoCA },
 ];
 
 const ACCENT = "hsl(205, 84%, 62%)";
-const PRIMARY = "#1076b8";
 const USA_POV = { lat: 39.5, lng: -97, altitude: 2.3 };
 const COUNTRIES_URL = "https://globe.gl/example/datasets/ne_110m_admin_0_countries.geojson";
 
@@ -113,10 +48,9 @@ export default function GlobeSection() {
   const [globeReady, setGlobeReady] = useState(false);
   const globeRef = useRef<any>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const [wrapSize, setWrapSize] = useState({ w: 700, h: 620 });
+  const [wrapSize, setWrapSize] = useState({ w: 800, h: 720 });
   const returnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Land dot-matrix data
   useEffect(() => {
     fetch(COUNTRIES_URL)
       .then((r) => r.json())
@@ -124,7 +58,6 @@ export default function GlobeSection() {
       .catch(() => {});
   }, []);
 
-  // Track wrapper size so the globe canvas can overflow the card edge
   useEffect(() => {
     const update = () => {
       if (!wrapRef.current) return;
@@ -171,7 +104,7 @@ export default function GlobeSection() {
     globeRef.current?.pointOfView(USA_POV, 1000);
   };
 
-  // Pill-style HTML markers on the globe (like the reference)
+  // Pill-style state markers on the globe
   const makeMarker = useCallback(
     (d: object) => {
       const loc = d as Location;
@@ -196,20 +129,20 @@ export default function GlobeSection() {
     [selectLocation]
   );
 
-  const globeW = Math.round(wrapSize.w * 1.45);
+  const globeW = Math.round(wrapSize.w * 1.5);
   const globeH = Math.round(Math.max(wrapSize.h, globeW) * 1.15);
 
   return (
-    <section className="px-4 py-10 md:px-8 lg:px-12 bg-background">
+    <section className="px-3 py-8 md:px-6 bg-background">
       <ScrollReveal>
         <div
-          className="relative mx-auto max-w-[1500px] rounded-3xl overflow-hidden"
+          className="relative mx-auto max-w-[1800px] rounded-3xl overflow-hidden lg:min-h-[88vh] flex"
           style={{
             background:
               "linear-gradient(115deg, hsl(212,75%,14%) 0%, hsl(208,80%,20%) 55%, hsl(205,84%,28%) 100%)",
           }}
         >
-          {/* soft light sweep, like the reference */}
+          {/* soft light sweep */}
           <div
             className="pointer-events-none absolute inset-0"
             style={{
@@ -218,39 +151,39 @@ export default function GlobeSection() {
             }}
           />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-[44%_56%] items-stretch w-full">
             {/* ── Left: copy ── */}
-            <div className="relative z-10 px-8 py-16 md:px-14 lg:py-24 flex flex-col justify-center">
+            <div className="relative z-10 px-8 py-16 md:px-16 lg:py-28 flex flex-col justify-center">
               <p
-                className="text-xs font-bold tracking-[0.28em] uppercase mb-10"
+                className="text-xs font-bold tracking-[0.28em] uppercase mb-12"
                 style={{ color: "rgba(255,255,255,0.85)" }}
               >
                 Our Locations
               </p>
-              <h2 className="text-5xl md:text-6xl font-extrabold leading-[1.05] text-white mb-3">
+              <h2 className="text-5xl md:text-7xl font-extrabold leading-[1.04] text-white mb-3">
                 National reach.
               </h2>
               <h2
-                className="text-5xl md:text-6xl font-extrabold leading-[1.05] mb-10"
+                className="text-5xl md:text-7xl font-extrabold leading-[1.04] mb-12"
                 style={{ color: ACCENT }}
               >
                 Local commitment.
               </h2>
-              <p className="text-white/70 text-lg leading-relaxed max-w-md mb-12">
-                Six manufacturing facilities across the United States,
-                delivering packaging where you need it — and growing.
+              <p className="text-white/70 text-lg md:text-xl leading-relaxed max-w-md mb-14">
+                Nine facilities across the United States, delivering
+                packaging where you need it — and growing.
               </p>
               <div className="flex items-center gap-3">
                 <Link
                   to="/divisions"
-                  className="inline-flex items-center px-7 py-3.5 rounded-full bg-white text-sm font-bold transition-transform hover:scale-[1.03]"
+                  className="inline-flex items-center px-8 py-4 rounded-full bg-white text-sm font-bold transition-transform hover:scale-[1.03]"
                   style={{ color: "hsl(208,80%,20%)" }}
                 >
                   Explore divisions
                 </Link>
                 <Link
                   to="/contact"
-                  className="w-12 h-12 rounded-full bg-white flex items-center justify-center transition-transform hover:scale-[1.06]"
+                  className="w-[52px] h-[52px] rounded-full bg-white flex items-center justify-center transition-transform hover:scale-[1.06]"
                   style={{ color: "hsl(208,80%,20%)" }}
                 >
                   <ArrowRight size={18} />
@@ -259,11 +192,8 @@ export default function GlobeSection() {
             </div>
 
             {/* ── Right: dotted globe bleeding off the edge ── */}
-            <div ref={wrapRef} className="relative h-[440px] lg:h-[680px]">
-              <div
-                className="absolute top-1/2 -translate-y-1/2"
-                style={{ left: "2%" }}
-              >
+            <div ref={wrapRef} className="relative h-[460px] lg:h-auto lg:min-h-[760px]">
+              <div className="absolute top-1/2 -translate-y-1/2" style={{ left: "2%" }}>
                 <Suspense fallback={null}>
                   <GlobeGL
                     ref={globeRef}
@@ -299,7 +229,7 @@ export default function GlobeSection() {
                 </Suspense>
               </div>
 
-              {/* Detail card */}
+              {/* Photo card — just picture + label */}
               <AnimatePresence>
                 {active && (
                   <motion.div
@@ -308,12 +238,12 @@ export default function GlobeSection() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 14 }}
                     transition={{ type: "spring", stiffness: 340, damping: 28 }}
-                    className="absolute bottom-5 left-5 w-72 rounded-2xl overflow-hidden shadow-2xl z-20 bg-white"
+                    className="absolute bottom-6 left-6 w-80 rounded-2xl overflow-hidden shadow-2xl z-20 bg-white"
                   >
-                    <div className="relative h-32 bg-gray-100">
+                    <div className="relative h-48 bg-gray-100">
                       <img
                         src={active.photo}
-                        alt={active.name}
+                        alt={active.label}
                         className="w-full h-full object-cover"
                       />
                       <button
@@ -322,40 +252,10 @@ export default function GlobeSection() {
                       >
                         <X size={13} />
                       </button>
-                      <span
-                        className="absolute bottom-2.5 left-3 text-[10px] font-bold px-2.5 py-1 rounded-md text-white"
-                        style={{ background: PRIMARY }}
-                      >
-                        {active.division}
-                      </span>
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-extrabold text-gray-900 text-sm leading-snug mb-1">
-                        {active.name}
-                      </h3>
-                      <div className="flex items-center gap-1 text-[11px] text-gray-400 mb-2.5">
-                        <MapPin size={10} />
-                        {active.city}, {active.state}
-                      </div>
-                      <p className="text-[11px] text-gray-500 leading-relaxed mb-3">
-                        {active.description}
-                      </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="rounded-lg p-2.5" style={{ background: "hsl(205,84%,95%)" }}>
-                          <div className="flex items-center gap-1 mb-0.5">
-                            <Users size={9} style={{ color: PRIMARY }} />
-                            <span className="text-[9px] text-gray-400 uppercase tracking-wide">Team</span>
-                          </div>
-                          <div className="font-extrabold text-gray-800 text-sm">{active.employees}</div>
-                        </div>
-                        <div className="rounded-lg p-2.5" style={{ background: "hsl(205,84%,95%)" }}>
-                          <div className="flex items-center gap-1 mb-0.5">
-                            <Building2 size={9} style={{ color: PRIMARY }} />
-                            <span className="text-[9px] text-gray-400 uppercase tracking-wide">Facility</span>
-                          </div>
-                          <div className="font-extrabold text-gray-800 text-sm">{active.sqft}</div>
-                        </div>
-                      </div>
+                    <div className="px-4 py-3.5 flex items-center gap-2">
+                      <MapPin size={14} style={{ color: "#1076b8" }} className="flex-shrink-0" />
+                      <h3 className="font-extrabold text-gray-900 text-sm">{active.label}</h3>
                     </div>
                   </motion.div>
                 )}
