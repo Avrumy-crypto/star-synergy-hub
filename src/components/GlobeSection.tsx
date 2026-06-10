@@ -104,7 +104,7 @@ const LOCATIONS: Location[] = [
 
 const ACCENT = "hsl(205, 84%, 62%)";
 const PRIMARY = "#1076b8";
-const USA_POV = { lat: 39.5, lng: -97, altitude: 1.5 };
+const USA_POV = { lat: 39.5, lng: -97, altitude: 2.3 };
 const COUNTRIES_URL = "https://globe.gl/example/datasets/ne_110m_admin_0_countries.geojson";
 
 export default function GlobeSection() {
@@ -147,10 +147,8 @@ export default function GlobeSection() {
   useEffect(() => {
     if (!globeReady || !globeRef.current) return;
     const ctrl = globeRef.current.controls();
-    ctrl.enableZoom = true;
+    ctrl.enableZoom = false;
     ctrl.enablePan = false;
-    ctrl.minDistance = 130;
-    ctrl.maxDistance = 480;
     ctrl.addEventListener("change", scheduleReturn);
     globeRef.current.pointOfView(USA_POV, 0);
     return () => {
@@ -162,7 +160,7 @@ export default function GlobeSection() {
   const selectLocation = useCallback(
     (loc: Location) => {
       setActive(loc);
-      globeRef.current?.pointOfView({ lat: loc.lat, lng: loc.lng - 10, altitude: 1.0 }, 900);
+      globeRef.current?.pointOfView({ lat: loc.lat, lng: loc.lng - 10, altitude: 2.0 }, 900);
       scheduleReturn();
     },
     [scheduleReturn]
