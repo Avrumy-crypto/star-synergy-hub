@@ -27,3 +27,4 @@ dist-ssr
 .env
 analysis/raw_data.json
 analysis/raw_po.json
+__pycache__/
