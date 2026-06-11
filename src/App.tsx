@@ -13,6 +13,7 @@ import Careers from "./pages/Careers";
 import Contact from "./pages/Contact";
 import Divisions from "./pages/Divisions";
 import Admin from "./pages/Admin";
+import GapDashboard from "./pages/GapDashboard";
 import NotFound from "./pages/NotFound";
 import CustomCursor from "./components/CustomCursor";
 
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/careers" element={<Careers />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/gap-dashboard" element={<GapDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
