@@ -1,4 +1,4 @@
-import dashboard from "@/data/gap-dashboard.json";
+import dashboard from "./gap-dashboard.json";
 
 export interface Region {
   region: string;

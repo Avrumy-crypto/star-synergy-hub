@@ -1,4 +1,4 @@
-"""Export aggregated gap-analysis data to src/data/gap-dashboard.json for the web dashboard."""
+"""Export aggregated gap-analysis data to dashboard/gap-dashboard.json for the web dashboard."""
 import json, re
 import pandas as pd
 import numpy as np
@@ -117,11 +117,10 @@ out = {
   },
 }
 import os
-os.makedirs("../src/data", exist_ok=True)
 import re as _re
 payload = json.dumps(out, default=str)
 payload = _re.sub(r"\bNaN\b", "null", payload)  # strict JSON for the Vite importer
-with open("../src/data/gap-dashboard.json","w") as f:
+with open("../dashboard/gap-dashboard.json","w") as f:
     f.write(payload)
-print("wrote src/data/gap-dashboard.json")
+print("wrote dashboard/gap-dashboard.json")
 print({k: (len(v) if isinstance(v,list) else "...") for k,v in out.items()})

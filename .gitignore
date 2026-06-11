@@ -28,3 +28,4 @@ dist-ssr
 analysis/raw_data.json
 analysis/raw_po.json
 __pycache__/
+dashboard/dist

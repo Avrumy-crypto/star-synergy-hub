@@ -1,6 +1,4 @@
 import { useMemo, useState } from "react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -50,10 +48,7 @@ import {
   topStates,
   vendorFootprint,
   vendorPoints,
-} from "@/lib/gapData";
-
-const ADMIN_SESSION_KEY = "admin-authenticated";
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "fivestar-admin";
+} from "./gapData";
 
 const BAND_COLORS: Record<string, string> = {
   strong: "#16a34a",
@@ -716,65 +711,17 @@ gap_score         = quoted_$ × coverage_weakness × loss_factor / 1000`}
 /* ---------- page shell ---------- */
 
 const GapDashboard = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    typeof window !== "undefined" && window.localStorage.getItem(ADMIN_SESSION_KEY) === "true"
-  );
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  const login = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== ADMIN_PASSWORD) {
-      setError("Invalid password.");
-      return;
-    }
-    window.localStorage.setItem(ADMIN_SESSION_KEY, "true");
-    setIsAuthenticated(true);
-    setError("");
-    setPassword("");
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-        <main className="flex-1 flex items-center justify-center px-4">
-          <Card className="w-full max-w-sm">
-            <CardHeader>
-              <CardTitle>Vendor Gap Dashboard</CardTitle>
-              <CardDescription>Internal — enter the admin password</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={login} className="space-y-3">
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                {error && <p className="text-sm text-destructive">{error}</p>}
-                <Button type="submit" className="w-full">
-                  Enter
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-10 mt-16">
+    <div className="min-h-screen bg-background">
+      <main className="container mx-auto px-4 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Regional Demand &amp; Vendor Coverage</h1>
+          <h1 className="text-3xl font-bold">
+            Five Star Corrugated — Regional Demand &amp; Vendor Coverage
+          </h1>
           <p className="text-muted-foreground mt-1">
             24-month Odoo history ({meta.windowStart} → {meta.windowEnd}), generated{" "}
             {meta.generated}. Read-only analysis — coverage measured by freight distance, not
-            state lines.
+            state lines. Internal use only.
           </p>
         </div>
         <Tabs defaultValue="overview">
@@ -802,7 +749,6 @@ const GapDashboard = () => {
           </TabsContent>
         </Tabs>
       </main>
-      <Footer />
     </div>
   );
 };
