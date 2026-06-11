@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Env / credentials
+.env
+analysis/raw_data.json
+analysis/raw_po.json
